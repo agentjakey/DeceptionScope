@@ -147,6 +147,12 @@ activemq-data/
 # SageMath parsed files
 *.sage.py
 
+# Project outputs
+outputs/
+
+# macOS
+.DS_Store
+
 # Environments
 .env
 .envrc

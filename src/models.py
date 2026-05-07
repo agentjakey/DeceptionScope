@@ -8,6 +8,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+ANTHROPIC_API_KEY: str | None = os.environ.get("ANTHROPIC_API_KEY")
+OPENAI_API_KEY: str | None = os.environ.get("OPENAI_API_KEY")
+GOOGLE_AI_API_KEY: str | None = os.environ.get("GOOGLE_AI_API_KEY")
+
 
 class ModelProvider(Enum):
     ANTHROPIC = "anthropic"
@@ -70,10 +74,10 @@ AVAILABLE_MODELS: dict[str, ModelConfig] = {
     ),
 }
 
-_PROVIDER_KEY_VARS: dict[ModelProvider, str] = {
-    ModelProvider.ANTHROPIC: "ANTHROPIC_API_KEY",
-    ModelProvider.OPENAI: "OPENAI_API_KEY",
-    ModelProvider.GOOGLE: "GOOGLE_AI_API_KEY",
+_PROVIDER_KEYS: dict[ModelProvider, str | None] = {
+    ModelProvider.ANTHROPIC: ANTHROPIC_API_KEY,
+    ModelProvider.OPENAI: OPENAI_API_KEY,
+    ModelProvider.GOOGLE: GOOGLE_AI_API_KEY,
 }
 
 
@@ -83,13 +87,10 @@ def _complete_anthropic(
     user_content: str,
     max_tokens: int,
 ) -> str:
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise ProviderError("ANTHROPIC_API_KEY is not set", "anthropic")
     try:
         import anthropic
 
-        client = anthropic.Anthropic(api_key=api_key)
+        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         response = client.messages.create(
             model=config.model_id,
             max_tokens=max_tokens,
@@ -107,13 +108,10 @@ def _complete_openai(
     user_content: str,
     max_tokens: int,
 ) -> str:
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        raise ProviderError("OPENAI_API_KEY is not set", "openai")
     try:
         import openai
 
-        client = openai.OpenAI(api_key=api_key)
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
         response = client.chat.completions.create(
             model=config.model_id,
             max_tokens=max_tokens,
@@ -133,13 +131,10 @@ def _complete_google(
     user_content: str,
     max_tokens: int,
 ) -> str:
-    api_key = os.environ.get("GOOGLE_AI_API_KEY")
-    if not api_key:
-        raise ProviderError("GOOGLE_AI_API_KEY is not set", "google")
     try:
         import google.generativeai as genai
 
-        genai.configure(api_key=api_key)
+        genai.configure(api_key=GOOGLE_AI_API_KEY)
         model = genai.GenerativeModel(
             model_name=config.model_id,
             system_instruction=system_prompt,
@@ -181,6 +176,14 @@ def complete(
         )
 
     config = AVAILABLE_MODELS[model_alias]
+
+    if config.provider == ModelProvider.ANTHROPIC and not ANTHROPIC_API_KEY:
+        raise ProviderError("ANTHROPIC_API_KEY is not set", "anthropic")
+    if config.provider == ModelProvider.OPENAI and not OPENAI_API_KEY:
+        raise ProviderError("OPENAI_API_KEY is not set", "openai")
+    if config.provider == ModelProvider.GOOGLE and not GOOGLE_AI_API_KEY:
+        raise ProviderError("GOOGLE_AI_API_KEY is not set", "google")
+
     user_content = "\n\n".join(user_turns)
     handler = _DISPATCH[config.provider]
     return handler(config, system_prompt, user_content, max_tokens)  # type: ignore[operator]
@@ -194,7 +197,7 @@ def list_available_models() -> list[dict]:
     """
     result: list[dict] = []
     for alias, config in AVAILABLE_MODELS.items():
-        key_var = _PROVIDER_KEY_VARS[config.provider]
+        key_present = bool(_PROVIDER_KEYS[config.provider])
         result.append(
             {
                 "alias": alias,
@@ -202,7 +205,8 @@ def list_available_models() -> list[dict]:
                 "model_id": config.model_id,
                 "provider": config.provider.value,
                 "cost_per_1k_tokens": config.cost_per_1k_tokens,
-                "key_configured": bool(os.environ.get(key_var)),
+                "key_configured": key_present,
+                "available": key_present,
             }
         )
     return result

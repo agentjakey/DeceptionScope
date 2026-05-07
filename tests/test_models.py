@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -33,8 +32,7 @@ def test_list_available_models_aliases_match_registry():
 
 def test_provider_error_openai_key_missing():
     """complete() raises ProviderError(provider='openai') when OPENAI_API_KEY is unset."""
-    env_without_key = {k: v for k, v in os.environ.items() if k != "OPENAI_API_KEY"}
-    with patch.dict(os.environ, env_without_key, clear=True):
+    with patch("src.models.OPENAI_API_KEY", None):
         with pytest.raises(ProviderError) as exc_info:
             complete("system prompt", ["hello"], "gpt4o-mini")
     assert exc_info.value.provider == "openai"
@@ -42,7 +40,7 @@ def test_provider_error_openai_key_missing():
 
 def test_provider_error_openai_empty_string_key():
     """complete() raises ProviderError when OPENAI_API_KEY is an empty string."""
-    with patch.dict(os.environ, {"OPENAI_API_KEY": ""}, clear=False):
+    with patch("src.models.OPENAI_API_KEY", ""):
         with pytest.raises(ProviderError) as exc_info:
             complete("system", ["test"], "gpt4o")
     assert exc_info.value.provider == "openai"
@@ -64,8 +62,8 @@ def test_complete_joins_user_turns():
 
     alias = "haiku"
     config = AVAILABLE_MODELS[alias]
-    from src.models import ModelProvider
-    with patch("src.models._DISPATCH", {config.provider: fake_handler}):
+    with patch("src.models.ANTHROPIC_API_KEY", "test-key"), \
+         patch("src.models._DISPATCH", {config.provider: fake_handler}):
         complete("sys", ["turn one", "turn two", "turn three"], alias)
 
     assert captured["user_content"] == "turn one\n\nturn two\n\nturn three"

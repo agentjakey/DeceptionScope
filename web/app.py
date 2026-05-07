@@ -154,6 +154,19 @@ def health():
     return {"status": "ok"}, 200
 
 
+@app.route("/debug-env")
+def debug_env():
+    keys = {
+        "ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", "NOT FOUND"),
+        "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", "NOT FOUND"),
+        "GOOGLE_AI_API_KEY": os.environ.get("GOOGLE_AI_API_KEY", "NOT FOUND"),
+    }
+    return {
+        k: {"present": v != "NOT FOUND", "first_10": v[:10] if v != "NOT FOUND" else None}
+        for k, v in keys.items()
+    }
+
+
 # ---------------------------------------------------------------------------
 # Read-only API
 # ---------------------------------------------------------------------------

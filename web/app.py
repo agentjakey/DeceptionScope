@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from dataclasses import asdict
 from pathlib import Path
@@ -9,13 +10,15 @@ import yaml
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Add project root to sys.path before importing src modules.
 _ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
 load_dotenv(_ROOT / ".env")
-
 from src.models import ProviderError, list_available_models  # noqa: E402
 from src.multiplayer import run_multiplayer  # noqa: E402
 from src.runner import SessionResult, run_bon_session, run_comparison_session  # noqa: E402
@@ -33,6 +36,23 @@ app = Flask(
     static_url_path="/static",
 )
 CORS(app)
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["60 per minute"],
+    storage_uri="memory://",
+    strategy="fixed-window",
+)
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({"error": "Rate limit exceeded. Please wait before running another session."}), 429
+
+# When FORWARDED_ALLOW_IPS=* is set (e.g. Railway), trust X-Forwarded-For so
+# get_remote_address returns the real client IP rather than the proxy's address.
+if os.environ.get("FORWARDED_ALLOW_IPS") == "*":
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 
 # ---------------------------------------------------------------------------
@@ -218,6 +238,7 @@ def get_report(session_id: str):
 
 
 @app.route("/api/run", methods=["POST"])
+@limiter.limit("10 per minute")
 def run_session():
     body: dict = request.get_json(force=True) or {}
     scenario_name: str = body.get("scenario_name", "")
@@ -240,6 +261,7 @@ def run_session():
 
 
 @app.route("/api/run-comparison", methods=["POST"])
+@limiter.limit("5 per minute")
 def run_comparison():
     body: dict = request.get_json(force=True) or {}
     scenario_name: str = body.get("scenario_name", "")
@@ -260,6 +282,7 @@ def run_comparison():
 
 
 @app.route("/api/run-multiplayer", methods=["POST"])
+@limiter.limit("5 per minute")
 def run_multiplayer_session():
     body: dict = request.get_json(force=True) or {}
     scenario_name: str = body.get("scenario_name", "")
@@ -280,6 +303,7 @@ def run_multiplayer_session():
 
 
 @app.route("/api/score", methods=["POST"])
+@limiter.limit("10 per minute")
 def score_session_endpoint():
     body: dict = request.get_json(force=True) or {}
     session_id: str = body.get("session_id", "")

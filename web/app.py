@@ -146,14 +146,12 @@ def _session_metadata(data: dict) -> dict:
 
 @app.route("/")
 def index():
-    template_path = _HERE / "templates" / "index.html"
-    if not template_path.exists():
-        return (
-            "<h1>DeceptionScope</h1>"
-            "<p>Frontend not yet built. Run the CLI with "
-            "<code>python main.py run &lt;scenario&gt;</code>.</p>"
-        ), 200
     return render_template("index.html")
+
+
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
 
 
 # ---------------------------------------------------------------------------
@@ -343,4 +341,6 @@ def score_session_endpoint():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

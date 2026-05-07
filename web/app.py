@@ -234,7 +234,9 @@ def run_session():
     except ProviderError as exc:
         return jsonify({"error": "Provider key not configured", "provider": exc.provider}), 400
     except KeyError as exc:
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": f"Unknown model alias: {exc}"}), 400
+    except Exception as exc:
+        return jsonify({"error": f"Run failed: {exc}"}), 500
 
 
 @app.route("/api/run-comparison", methods=["POST"])

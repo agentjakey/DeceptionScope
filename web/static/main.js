@@ -407,6 +407,8 @@ async function runSession() {
   btn.textContent = 'Running...';
 
   try {
+    const payload = { scenario_name: scenario.name, model_alias: modelAlias, n: n };
+    console.log('[DeceptionScope] POST /api/run payload:', payload);
     const result = await apiRun(scenario.name, modelAlias, n);
     if (result.error) { showError(resultsEl, result); return; }
 
@@ -778,6 +780,21 @@ async function init() {
 
   renderSidebar(state.scenarios);
   renderRunModelGrid(state.models);
+
+  // Auto-select haiku on page load if no model has been chosen yet.
+  if (!state.runModel) {
+    var defaultModel = state.models.find(function(m) {
+      return m.alias === 'haiku' && m.key_configured;
+    });
+    if (!defaultModel) {
+      defaultModel = state.models.find(function(m) { return m.key_configured; });
+    }
+    if (defaultModel) {
+      state.runModel = defaultModel.alias;
+      renderRunModelGrid(state.models);
+    }
+  }
+
   renderCompareModelGrid(state.models);
   renderMultiplayerSelects(state.models);
   updateButtonStates();

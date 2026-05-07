@@ -227,6 +227,7 @@ body {
   font-family: var(--mono);
   font-size: 9px;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 /* -------------------------------------------------------------------------

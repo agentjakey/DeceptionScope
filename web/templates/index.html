@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeceptionScope</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-brand">
+      <span class="brand-name">DeceptionScope</span>
+      <span class="brand-subtitle">Model Organisms of Misalignment</span>
+    </div>
+    <nav class="tab-nav">
+      <button class="tab-btn is-active" data-tab="run">Run Probe</button>
+      <button class="tab-btn" data-tab="compare">Compare Models</button>
+      <button class="tab-btn" data-tab="multiplayer">Multiplayer</button>
+    </nav>
+  </header>
+
+  <div class="app-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-heading">Scenarios</div>
+      <div id="scenario-list"></div>
+    </aside>
+
+    <main class="main-panel">
+
+      <!-- Run Probe -->
+      <section id="tab-run" class="tab-panel is-active">
+        <div id="run-scenario-detail" class="scenario-detail"></div>
+        <div class="controls-section">
+          <div class="controls-row">
+            <div id="run-model-area" class="model-area"></div>
+            <div class="n-field">
+              <label class="field-label" for="run-n">Samples (N)</label>
+              <input class="n-input" id="run-n" type="number" min="1" max="20" value="8">
+            </div>
+          </div>
+          <button class="action-btn" id="run-btn" disabled>Run Session</button>
+        </div>
+        <div id="run-results" class="results-area"></div>
+      </section>
+
+      <!-- Compare Models -->
+      <section id="tab-compare" class="tab-panel">
+        <div class="controls-section">
+          <div class="controls-row">
+            <div id="compare-model-area" class="model-area"></div>
+            <div class="n-field">
+              <label class="field-label" for="compare-n">Samples per Model (N)</label>
+              <input class="n-input" id="compare-n" type="number" min="1" max="20" value="5">
+            </div>
+          </div>
+          <button class="action-btn" id="compare-btn" disabled>Run Comparison</button>
+        </div>
+        <div id="compare-results" class="results-area"></div>
+      </section>
+
+      <!-- Multiplayer -->
+      <section id="tab-multiplayer" class="tab-panel">
+        <div class="controls-section">
+          <div class="model-pair-row">
+            <div class="model-pair-col">
+              <label class="field-label" for="persuader-select">Persuader Model</label>
+              <select class="model-select" id="persuader-select"></select>
+            </div>
+            <div class="model-pair-col">
+              <label class="field-label" for="skeptic-select">Skeptic Model</label>
+              <select class="model-select" id="skeptic-select"></select>
+            </div>
+          </div>
+          <button class="action-btn" id="multiplayer-btn" disabled>Run Multiplayer Session</button>
+        </div>
+        <div id="multiplayer-results" class="results-area"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/main.js"></script>
+</body>
+</html>
